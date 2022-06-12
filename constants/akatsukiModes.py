@@ -1,0 +1,3 @@
+NONE = 0
+VANILLA = 1
+RELAX = 2
