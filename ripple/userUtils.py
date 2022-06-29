@@ -1082,7 +1082,7 @@ def unfreeze(userID: int, author: int = 999, _log=True) -> None:
     :param author: userID of the author (restricter)
     """
 
-    glob.db.execute("UPDATE users " "SET frozen = 0 " "WHERE id = %s", [userID])
+    glob.db.execute("UPDATE users " "SET frozen = 0, freeze_reason = '' " "WHERE id = %s", [userID])
 
     if _log:
         author_name = getUsername(author)
