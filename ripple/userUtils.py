@@ -961,31 +961,6 @@ def unrestrict(userID: int) -> None:
 
     unban(userID)
 
-
-def setDelayBan(userID: int, value: bool = True) -> None:
-    """
-    Set db flag to ban flagged users at a set inverval.
-
-    :param userID: user id
-    """
-
-    glob.db.execute(
-        "UPDATE users " "SET delay_ban = %s " "WHERE id = %s", [int(value), userID]
-    )
-
-
-def checkDelayBan(userID: int) -> int:
-    """
-    Check if a user is going to be banned automatically.
-
-    :param userID: user id
-    """
-
-    return glob.db.fetch("SELECT delay_ban FROM users " "WHERE id = %s", [userID])[
-        "delay_ban"
-    ]
-
-
 def appendNotes(
     userID: int, notes: str, addNl: bool = True, trackDate: bool = True
 ) -> None:
@@ -1277,12 +1252,11 @@ def removeFriend(userID: int, friendID: int) -> None:
 
 
 def scoreboardMismatch(userID: int, username: str) -> None:
-    if not (checkDelayBan(userID) or isRestricted(userID)):
+    if not isRestricted(userID):
         log.warning(
             f"**[{username}](https://akatsuki.pw/u/{userID}) has signed in using a custom client**.",
             "ac_general",
         )
-        setDelayBan(userID, True)
 
 
 def getCountry(userID: int) -> str:
