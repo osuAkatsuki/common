@@ -4,6 +4,7 @@ import time
 from typing import Any, List, Optional, Tuple, Union
 
 import bcrypt
+from orjson import loads
 from requests import get
 
 from common import generalUtils
@@ -12,7 +13,6 @@ from common.log import logUtils as log
 from common.ripple import passwordUtils
 from common.web.discord import Webhook
 from objects import glob
-from orjson import loads
 
 
 def getBeatmapTime(beatmapID: int) -> Any:
@@ -714,7 +714,7 @@ def getRankedScore(userID: int, gameMode: int) -> int:
     return result[f"ranked_score_{mode}"] if result else 0
 
 
-def getPP(userID: int, gameMode: int, relax: bool) -> int:
+def getPP(userID: int, gameMode: int, relax: bool, autopilot: bool) -> int:
     """
     Get userID's PP relative to gameMode.
 
@@ -724,8 +724,18 @@ def getPP(userID: int, gameMode: int, relax: bool) -> int:
     """
 
     mode = gameModes.getGameModeForDB(gameMode)
-    table = "rx_stats" if relax else "users_stats"
-    result = glob.db.fetch(f"SELECT pp_{mode} FROM {table} " "WHERE id = %s", [userID])
+
+    if autopilot:
+        stats_table = "ap_stats"
+    elif relax:
+        stats_table = "rx_stats"
+    else:
+        stats_table = "users_stats"
+
+    result = glob.db.fetch(
+        f"SELECT pp_{mode} FROM {stats_table} WHERE id = %s",
+        [userID],
+    )
     return result[f"pp_{mode}"] if result else 0
 
 
@@ -961,6 +971,7 @@ def unrestrict(userID: int) -> None:
 
     unban(userID)
 
+
 def appendNotes(
     userID: int, notes: str, addNl: bool = True, trackDate: bool = True
 ) -> None:
@@ -1057,7 +1068,9 @@ def unfreeze(userID: int, author: int = 999, _log=True) -> None:
     :param author: userID of the author (restricter)
     """
 
-    glob.db.execute("UPDATE users " "SET frozen = 0, freeze_reason = '' " "WHERE id = %s", [userID])
+    glob.db.execute(
+        "UPDATE users " "SET frozen = 0, freeze_reason = '' WHERE id = %s", [userID]
+    )
 
     if _log:
         author_name = getUsername(author)
