@@ -21,14 +21,25 @@ def newFirst(scoreID: int, userID: int, md5: str,
         [md5, mode, 1 if relax else 0, scoreID, userID]
     )
 
-def overwritePreviousScore(userID: int) -> Optional[str]: # written pretty horribly, redo one day
-    """
-    Update a users previous score to overwrite all of their other scores, no matter what.
-    The ratelimit has already been checked in the case of the !overwrite command.
-    """
+def get_user_recent_score(table: str, userID: int, mode: int) -> dict:
+    if mode == 0:
+        difficulty = "difficulty_std"
+    elif mode == 1:
+        difficulty = "difficulty_taiko"
+    elif mode == 2:
+        difficulty = "difficulty_ctb"
+    elif mode == 3:
+        difficulty = "difficulty_mania"
+    else:
+        raise Exception(f'invalid mode: {mode}')
 
-    # Figure out whether they would like
-    # to overwrite a relax or vanilla score
+    return glob.db.fetch( # type: ignore
+    'SELECT {0}.id, {0}.beatmap_md5, beatmaps.song_name, beatmap.max_combo, beatmap.{1}  FROM {0} '
+    'LEFT JOIN beatmaps USING(beatmap_md5) '
+    'WHERE {0}.userid = %s AND {0}.completed = 2 AND {0}.play_mode = %s '
+    'ORDER BY {0}.time DESC LIMIT 1'.format(table, difficulty), [userID, mode])
+
+def get_users_recent_score_table(userID: int) -> str | None:
     relax = glob.db.fetch(
         'SELECT time, play_mode FROM scores_relax '
         'WHERE userid = %s AND completed = 2 '
@@ -43,32 +54,43 @@ def overwritePreviousScore(userID: int) -> Optional[str]: # written pretty horri
     if not (relax or vanilla):
         return # No scores?
     elif not relax:
-        table = 'scores'
+        return 'scores'
     elif not vanilla:
-        table = 'scores_relax'
+        return 'scores_relax'
     else:
-        table = 'scores_relax' if relax['time'] > vanilla['time'] else 'scores'
+        return 'scores_relax' if relax['time'] > vanilla['time'] else 'scores'
 
-    mode = relax['play_mode'] if table == 'scores_relax' else vanilla['play_mode']
+def get_users_recent_mode(userID: int) -> int:
+    relax = glob.db.fetch(
+        'SELECT time, play_mode FROM scores_relax '
+        'WHERE userid = %s AND completed = 2 '
+        'ORDER BY id DESC LIMIT 1', [userID]
+    )
+    vanilla = glob.db.fetch(
+        'SELECT time, play_mode FROM scores '
+        'WHERE userid = %s AND completed = 2 '
+        'ORDER BY id DESC LIMIT 1', [userID]
+    )
 
-    # Select the users newest completed=2 score
-    result = glob.db.fetch(
-        'SELECT {0}.id, {0}.beatmap_md5, beatmaps.song_name FROM {0} '
-        'LEFT JOIN beatmaps USING(beatmap_md5) '
-        'WHERE {0}.userid = %s AND {0}.completed = 2 AND {0}.play_mode = %s '
-        'ORDER BY {0}.time DESC LIMIT 1'.format(table), [userID, mode])
+    return relax['play_mode'] if table == 'scores_relax' else vanilla['play_mode'] # type: ignore
+
+def overwritePreviousScore(userID: int, recent_score: dict, mode: int, table: str) -> Optional[str]: # written pretty horribly, redo one day
+    """
+    Update a users previous score to overwrite all of their other scores, no matter what.
+    The ratelimit has already been checked in the case of the !overwrite command.
+    """
 
     # Set their previous completed scores on the map to completed = 2.
     glob.db.execute(
         f'UPDATE {table} SET completed = 2 '
         'WHERE beatmap_md5 = %s AND (completed & 3) = 3 '
         'AND userid = %s AND play_mode = %s',
-        [result['beatmap_md5'], userID, mode])
+        [recent_score['beatmap_md5'], userID, mode])
 
     # Set their new score to completed = 3.
     glob.db.execute(
         f'UPDATE {table} SET completed = 3 WHERE id = %s',
-        [result['id']])
+        [recent_score['id']])
 
     # Update the last time they overwrote a score to the current time.
     glob.db.execute(
@@ -76,7 +98,7 @@ def overwritePreviousScore(userID: int) -> Optional[str]: # written pretty horri
         'WHERE id = %s', [userID])
 
     # Return song_name for the command to send back to the user
-    return result['song_name']
+    return recent_score['song_name']
 
 def getPPLimit(gameMode: int, mods_used: int) -> str:
     """
