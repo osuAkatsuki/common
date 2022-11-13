@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 Clean = 0
 AinuClient = 1 << 0
 SpeedHackDetected = 1 << 1

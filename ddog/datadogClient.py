@@ -1,8 +1,12 @@
-from typing import Callable, List, Optional
+from __future__ import annotations
+
+from typing import Callable
+from typing import List
+from typing import Optional
 
 import tornado.ioloop
-from datadog import ThreadStats, initialize
-
+from datadog import initialize
+from datadog import ThreadStats
 from objects import glob
 
 
@@ -14,15 +18,17 @@ class periodicCheck:
         :param name: Datadog stat name, without prefix
         :param checkFunction: Function that returns the data to report. Eg: `lambda: len(something)`
         """
-        self.name = f'{glob.DATADOG_PREFIX}.{name}'
+        self.name = f"{glob.DATADOG_PREFIX}.{name}"
         self.checkFunction = checkFunction
+
 
 class datadogClient:
     def __init__(
-        self, apiKey: Optional[str] = None,
+        self,
+        apiKey: Optional[str] = None,
         appKey: Optional[str] = None,
         periodicChecks: Optional[List[periodicCheck]] = None,
-        constant_tags: Optional[List[str]] = None
+        constant_tags: Optional[List[str]] = None,
     ) -> None:
         """
         Initialize a toggleable Datadog Client
@@ -37,7 +43,10 @@ class datadogClient:
             self.client.start()
             self.periodicChecks = periodicChecks
             if self.periodicChecks:
-                tornado.ioloop.PeriodicCallback(self.__periodicCheckLoop, 10 * 1000).start()
+                tornado.ioloop.PeriodicCallback(
+                    self.__periodicCheckLoop,
+                    10 * 1000,
+                ).start()
         else:
             self.client = None
 

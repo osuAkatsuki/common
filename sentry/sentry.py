@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 from sys import exc_info
 from traceback import format_exc
 
+import settings
 import tornado.gen
-
 from common.log import logUtils as log
 from objects import glob
 
-import settings
 
 def capture():
     """
@@ -22,15 +23,23 @@ def capture():
 
     :return:
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except:
-                log.error("Unhandled exception!\n```\n{}\n{}```".format(exc_info(), format_exc()))
+                log.error(
+                    "Unhandled exception!\n```\n{}\n{}```".format(
+                        exc_info(),
+                        format_exc(),
+                    ),
+                )
                 if settings.SENTRY_ENABLE:
                     glob.application.sentry_client.captureException()
+
         return wrapper
+
     return decorator
 
 
@@ -49,11 +58,15 @@ def captureTornado(func):
     :param func:
     :return:
     """
+
     def wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
         except:
-            log.error("Unhandled exception!\n```\n{}\n{}```".format(exc_info(), format_exc()))
+            log.error(
+                f"Unhandled exception!\n```\n{exc_info()}\n{format_exc()}```",
+            )
             if settings.SENTRY_ENABLE:
                 yield tornado.gen.Task(self.captureException, exc_info=True)
+
     return wrapper

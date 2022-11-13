@@ -1,13 +1,13 @@
+from __future__ import annotations
+
 from typing import List
 
-import tornado
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
-from tornado.ioloop import IOLoop
-
 from common.log import logUtils as log
 from objects import glob
+from raven.contrib.tornado import SentryMixin
+from tornado.ioloop import IOLoop
 
 
 class asyncRequestHandler(SentryMixin, tornado.web.RequestHandler):
@@ -17,11 +17,15 @@ class asyncRequestHandler(SentryMixin, tornado.web.RequestHandler):
     use asyncGet() and asyncPost() instead of get() and post().
     Done. I'm not kidding.
     """
+
     @tornado.web.asynchronous
     @tornado.gen.engine
     def get(self, *args, **kwargs):
         try:
-            yield tornado.gen.Task(runBackground, (self.asyncGet, tuple(args), dict(kwargs)))
+            yield tornado.gen.Task(
+                runBackground,
+                (self.asyncGet, tuple(args), dict(kwargs)),
+            )
         finally:
             if not self._finished:
                 self.finish()
@@ -30,7 +34,10 @@ class asyncRequestHandler(SentryMixin, tornado.web.RequestHandler):
     @tornado.gen.engine
     def post(self, *args, **kwargs):
         try:
-            yield tornado.gen.Task(runBackground, (self.asyncPost, tuple(args), dict(kwargs)))
+            yield tornado.gen.Task(
+                runBackground,
+                (self.asyncPost, tuple(args), dict(kwargs)),
+            )
         finally:
             if not self._finished:
                 self.finish()
@@ -59,6 +66,7 @@ class asyncRequestHandler(SentryMixin, tornado.web.RequestHandler):
     def checkArguments(self, required: List[str]) -> bool:
         ...
 
+
 def getRequestIP(request):
     """
     Return CF-Connecting-IP (request IP when under cloudflare, you have to configure nginx to enable that)
@@ -74,6 +82,7 @@ def getRequestIP(request):
     else:
         return request.remote_ip
 
+
 def runBackground(data, callback):
     """
     Run a function in the background.
@@ -84,10 +93,13 @@ def runBackground(data, callback):
     :return:
     """
     func, args, kwargs = data
+
     def _callback(result):
         IOLoop.instance().add_callback(lambda: callback(result))
+
     glob.pool.apply_async(func, args, kwargs, _callback)
     glob.dog.increment(glob.DATADOG_PREFIX + ".incoming_requests")
+
 
 def checkArguments(arguments, requiredArguments):
     """
@@ -102,6 +114,7 @@ def checkArguments(arguments, requiredArguments):
             return False
     return True
 
+
 def printArguments(t):
     """
     Print passed arguments, for debug purposes
@@ -110,5 +123,5 @@ def printArguments(t):
     """
     msg = "ARGS::"
     for i in t.request.arguments:
-        msg += f'{i}={t.get_argument(i)}\r\n'
+        msg += f"{i}={t.get_argument(i)}\r\n"
     log.debug(msg)

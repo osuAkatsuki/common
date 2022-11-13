@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import bcrypt
 
 
@@ -12,7 +14,8 @@ def checkOldPassword(password: str, salt: str, rightPassword: str) -> bool:
     :return: True if the password is correct, otherwise False.
     """
     return False
-    #return (rightPassword == crypt.crypt(password, "$2y$"+str(base64.b64decode(salt))))
+    # return (rightPassword == crypt.crypt(password, "$2y$"+str(base64.b64decode(salt))))
+
 
 def checkNewPassword(password: str, dbPassword: str) -> bool:
     """
@@ -29,6 +32,7 @@ def checkNewPassword(password: str, dbPassword: str) -> bool:
     dbPassword = dbPassword.encode("utf-8")
     return bcrypt.checkpw(password, dbPassword)
 
+
 def genBcrypt(password: str) -> bytes:
     """
     Bcrypts a password.
@@ -36,4 +40,4 @@ def genBcrypt(password: str) -> bytes:
     :param password: the password to hash
     :return: bytestring
     """
-    return bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt(10, b'2a'))
+    return bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt(10, b"2a"))

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from objects import glob
 
 
@@ -6,15 +8,14 @@ class buffer:
     A file buffer object.
     This buffer caches data in memory and when it's full, it writes the content to a file.
     """
-    __slots__ = (
-        'content', 'length', 'fileName',
-        'writeType', 'maxLength'
-    )
+
+    __slots__ = ("content", "length", "fileName", "writeType", "maxLength")
 
     def __init__(
-        self, fileName: str,
+        self,
+        fileName: str,
         writeType: str = "a",
-        maxLength: int = 512
+        maxLength: int = 512,
     ) -> None:
         """
         A file buffer object
@@ -59,16 +60,18 @@ class buffer:
         self.content = ""
         self.length = 0
 
+
 class buffersList:
     """
     A list of buffers
     """
-    __slots__ = ('buffers',)
+
+    __slots__ = ("buffers",)
 
     def __init__(self) -> None:
         self.buffers = {}
 
-    def write(self, fileName: str , content: str) -> None:
+    def write(self, fileName: str, content: str) -> None:
         """
         Write some data to an existing buffer in this list (or create a new one if it doesn't exist).
         If the buffer is full, the data is written to the file and the buffer resets.

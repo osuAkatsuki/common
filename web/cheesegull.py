@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 from collections import defaultdict
-from json import JSONDecodeError, loads
+from json import JSONDecodeError
+from json import loads
 
 import requests
+import settings
+from objects import glob
 from requests import RequestException
 
 from constants import exceptions
-from objects import glob
 
-import settings
 
 def cheesegullRequest(
     handler,
@@ -124,7 +127,8 @@ def cheesegullRequest(
 
 def getListing(rankedStatus, page, gameMode, query):
     glob.dog.increment(
-        f"{glob.DATADOG_PREFIX}.cheesegull_requests", tags=["cheesegull:listing"]
+        f"{glob.DATADOG_PREFIX}.cheesegull_requests",
+        tags=["cheesegull:listing"],
     )
     params = {"query": query, "offset": page, "amount": 100}
     if rankedStatus:
@@ -138,14 +142,16 @@ def getListing(rankedStatus, page, gameMode, query):
 
 def getBeatmapSet(id):
     glob.dog.increment(
-        f"{glob.DATADOG_PREFIX}.cheesegull_requests", tags=["cheesegull:set"]
+        f"{glob.DATADOG_PREFIX}.cheesegull_requests",
+        tags=["cheesegull:set"],
     )
     return cheesegullRequest(f"s/{id}")
 
 
 def getBeatmap(id):
     glob.dog.increment(
-        f"{glob.DATADOG_PREFIX}.cheesegull_requests", tags=["cheesegull:beatmap"]
+        f"{glob.DATADOG_PREFIX}.cheesegull_requests",
+        tags=["cheesegull:beatmap"],
     )
     setID = cheesegullRequest(f"b/{id}", wants="ParentSetID")
     return getBeatmapSet(setID) if setID and setID > 0 else None
@@ -158,7 +164,7 @@ def toDirect(data):
         (
             "{SetID}.osz|{Artist}|{Title}|{Creator}|{RankedStatus}|0.00|{LastUpdate}|"
             "{SetID}|{SetID}|{HasVideo}|0|1337|{FileSizeNoVideo}|"
-        ).format(**data, FileSizeNoVideo="7331" if data["HasVideo"] else "")
+        ).format(**data, FileSizeNoVideo="7331" if data["HasVideo"] else ""),
     ]
 
     if len(data["ChildrenBeatmaps"]) > 0:
@@ -169,7 +175,7 @@ def toDirect(data):
                     **i,
                     DiffNameSanitized=i["DiffName"].replace("@", ""),
                     ReadableLength=f"{i['TotalLength'] // 60}m{i['TotalLength'] % 60}s",
-                )
+                ),
             )
 
     return f"{''.join(s).strip(',')}|"

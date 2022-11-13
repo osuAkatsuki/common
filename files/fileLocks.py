@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from threading import Lock
 
 
 class fileLocks:
-    __slots__ = ('locks',)
+    __slots__ = ("locks",)
 
     def __init__(self) -> None:
         # Dictionary containing threading.Lock s
