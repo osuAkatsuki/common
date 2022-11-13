@@ -1,20 +1,25 @@
 # TODO: seriously nuke this
+from __future__ import annotations
 
 import time
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import bcrypt
-from orjson import loads
-from requests import get
-
+import settings
 from common import generalUtils
-from common.constants import gameModes, mods, privileges
+from common.constants import gameModes
+from common.constants import mods
+from common.constants import privileges
 from common.log import logUtils as log
 from common.ripple import passwordUtils
 from common.web.discord import Webhook
 from objects import glob
-
-import settings
+from orjson import loads
+from requests import get
 
 
 def getBeatmapTime(beatmapID: int) -> Any:
@@ -24,7 +29,8 @@ def getBeatmapTime(beatmapID: int) -> Any:
 
     # First try to grab locally before using mirror.
     res = glob.db.fetch(
-        "SELECT hit_length FROM beatmaps " "WHERE beatmap_id = %s", [beatmapID]
+        "SELECT hit_length FROM beatmaps " "WHERE beatmap_id = %s",
+        [beatmapID],
     )
 
     if res:
@@ -40,7 +46,10 @@ def getBeatmapTime(beatmapID: int) -> Any:
 
 
 def submitBeatmapRequest(
-    userID: int, beatmapID: int, mapType: str, gameMode: str
+    userID: int,
+    beatmapID: int,
+    mapType: str,
+    gameMode: str,
 ) -> bool:
     """
     Submit a beatmap nomination request to the discord.
@@ -67,7 +76,7 @@ def submitBeatmapRequest(
         url=f"http://akatsuki.pw/u/{userID}",
     )
     embed.set_image(
-        f"https://assets.ppy.sh/beatmaps/{b['beatmapset_id']}/covers/cover.jpg?1522396856"
+        f"https://assets.ppy.sh/beatmaps/{b['beatmapset_id']}/covers/cover.jpg?1522396856",
     )
     embed.set_title(title=b["song_name"], url=f"http://akatsuki.pw/b/{beatmapID}")
     embed.set_footer(
@@ -267,7 +276,8 @@ def getIDSafe(_safeUsername: str) -> Optional[int]:
     """
 
     result = glob.db.fetch(
-        "SELECT id " "FROM users " "WHERE username_safe = %s", [_safeUsername]
+        "SELECT id " "FROM users " "WHERE username_safe = %s",
+        [_safeUsername],
     )
 
     return result["id"] if result else None
@@ -309,7 +319,9 @@ def getID(username: str) -> int:
 
         # Otherwise, save it in redis and return it
         glob.redis.set(
-            f"ripple:userid_cache:{usernameSafe}", userID, 3600
+            f"ripple:userid_cache:{usernameSafe}",
+            userID,
+            3600,
         )  # expires in 1 hour
         return userID
 
@@ -339,7 +351,8 @@ def getSafeUsername(userID: int) -> Optional[str]:
     """
 
     result = glob.db.fetch(
-        "SELECT username_safe " "FROM users " "WHERE id = %s", [userID]
+        "SELECT username_safe " "FROM users " "WHERE id = %s",
+        [userID],
     )
 
     return result["username_safe"] if result else None
@@ -401,7 +414,9 @@ def checkLogin(userID: int, password: str, ip: str = "") -> bool:
 
     if passwordData["password_version"] == 1:
         ok = passwordUtils.checkOldPassword(
-            password, passwordData["salt"], passwordData["password_md5"]
+            password,
+            passwordData["salt"],
+            passwordData["password_md5"],
         )
         if not ok:
             return False
@@ -458,7 +473,10 @@ def getLevel(totalScore: int):
 
 
 def updateLevel(
-    userID: int, gameMode: int = 0, totalScore: int = 0, relax: bool = False
+    userID: int,
+    gameMode: int = 0,
+    totalScore: int = 0,
+    relax: bool = False,
 ) -> None:
     """
     Update level in DB for userID relative to gameMode.
@@ -492,7 +510,8 @@ def updateLevel(
 
     # Save new level
     glob.db.execute(
-        f"UPDATE {table} SET level_{mode} = %s " "WHERE id = %s", [level, userID]
+        f"UPDATE {table} SET level_{mode} = %s " "WHERE id = %s",
+        [level, userID],
     )
 
 
@@ -556,7 +575,7 @@ def calculatePP(userID: int, gameMode: int, relax: bool) -> int:
                 "WHERE userid = %s AND play_mode = %s AND completed = 3 "
                 "AND ranked >= 2 AND ranked != 5 AND pp IS NOT NULL ORDER BY pp DESC LIMIT 125",
                 (userID, gameMode),
-            )
+            ),
         )
     )
 
@@ -599,7 +618,8 @@ def updatePP(userID: int, gameMode: int, relax: bool) -> None:
 
     table = "rx_stats" if relax else "users_stats"
     glob.db.execute(
-        f"UPDATE {table} SET pp_{mode} = %s " "WHERE id = %s LIMIT 1", [newPP, userID]
+        f"UPDATE {table} SET pp_{mode} = %s " "WHERE id = %s LIMIT 1",
+        [newPP, userID],
     )
 
 
@@ -675,7 +695,8 @@ def updateStats(userID: int, __score, __old=None) -> None:
         """
 
         glob.db.execute(
-            qbase + " WHERE id = %s LIMIT 1", [__score.rankedScoreIncrease, userID]
+            qbase + " WHERE id = %s LIMIT 1",
+            [__score.rankedScoreIncrease, userID],
         )
 
         # Update accuracy
@@ -710,7 +731,8 @@ def getRankedScore(userID: int, gameMode: int) -> int:
 
     mode = gameModes.getGameModeForDB(gameMode)
     result = glob.db.fetch(
-        f"SELECT ranked_score_{mode} " "FROM users_stats " "WHERE id = %s", [userID]
+        f"SELECT ranked_score_{mode} " "FROM users_stats " "WHERE id = %s",
+        [userID],
     )
 
     return result[f"ranked_score_{mode}"] if result else 0
@@ -818,7 +840,8 @@ def check2FA(userID: int, ip: int) -> bool:
         return False
 
     return not glob.db.fetch(
-        "SELECT id FROM ip_user " "WHERE userid = %s AND ip = %s", [userID, ip]
+        "SELECT id FROM ip_user " "WHERE userid = %s AND ip = %s",
+        [userID, ip],
     )
 
 
@@ -832,7 +855,8 @@ def isAllowed(userID: int) -> bool:
 
     return (
         glob.db.fetch(
-            "SELECT 1 FROM users " "WHERE id = %s " "AND privileges & 3 = 3", [userID]
+            "SELECT 1 FROM users " "WHERE id = %s " "AND privileges & 3 = 3",
+            [userID],
         )
         is not None
     )
@@ -975,7 +999,10 @@ def unrestrict(userID: int) -> None:
 
 
 def appendNotes(
-    userID: int, notes: str, addNl: bool = True, trackDate: bool = True
+    userID: int,
+    notes: str,
+    addNl: bool = True,
+    trackDate: bool = True,
 ) -> None:
     """
     Append `notes` to `userID`'s "notes for CM"
@@ -1056,7 +1083,8 @@ def beginFreezeTimer(userID) -> None:
     restriction_time = int(time.time() + (86400 * 7))
 
     glob.db.execute(
-        "UPDATE users SET frozen = %s " "WHERE id = %s", [restriction_time, userID]
+        "UPDATE users SET frozen = %s " "WHERE id = %s",
+        [restriction_time, userID],
     )
 
     return restriction_time  # Return so we can update the time
@@ -1071,7 +1099,8 @@ def unfreeze(userID: int, author: int = 999, _log=True) -> None:
     """
 
     glob.db.execute(
-        "UPDATE users " "SET frozen = 0, freeze_reason = '' WHERE id = %s", [userID]
+        "UPDATE users " "SET frozen = 0, freeze_reason = '' WHERE id = %s",
+        [userID],
     )
 
     if _log:
@@ -1138,7 +1167,8 @@ def getTotalScore(userID: int, gameMode: int) -> int:
     modeForDB = gameModes.getGameModeForDB(gameMode)
 
     return glob.db.fetch(
-        f"SELECT total_score_{modeForDB} " "FROM users_stats " "WHERE id = %s", [userID]
+        f"SELECT total_score_{modeForDB} " "FROM users_stats " "WHERE id = %s",
+        [userID],
     )[f"total_score_{modeForDB}"]
 
 
@@ -1175,7 +1205,8 @@ def getGameRank(userID: int, gameMode: int, relax_ap: int) -> int:
         board = "autoboard"
 
     position = glob.redis.zrevrank(
-        f"ripple:{board}:{gameModes.getGameModeForDB(gameMode)}", userID
+        f"ripple:{board}:{gameModes.getGameModeForDB(gameMode)}",
+        userID,
     )
 
     return int(position) + 1 if position is not None else 0
@@ -1193,7 +1224,8 @@ def getPlaycount(userID: int, gameMode: int) -> int:
     modeForDB = gameModes.getGameModeForDB(gameMode)
 
     return glob.db.fetch(
-        f"SELECT playcount_{modeForDB} " "FROM users_stats " "WHERE id = %s", [userID]
+        f"SELECT playcount_{modeForDB} " "FROM users_stats " "WHERE id = %s",
+        [userID],
     )[f"playcount_{modeForDB}"]
 
 
@@ -1208,7 +1240,8 @@ def getFriendList(userID: int):
     # Get friends from db
     # TODO: tuple cursor support? or use cmyui.mysql sync ver/make this native async
     friends = glob.db.fetchAll(
-        "SELECT user2 " "FROM users_relationships " "WHERE user1 = %s", [userID]
+        "SELECT user2 " "FROM users_relationships " "WHERE user1 = %s",
+        [userID],
     )
 
     if not friends or not len(friends):
@@ -1283,7 +1316,8 @@ def getCountry(userID: int) -> str:
     """
 
     return glob.db.fetch(
-        "SELECT country " "FROM users_stats " "WHERE id = %s", [userID]
+        "SELECT country " "FROM users_stats " "WHERE id = %s",
+        [userID],
     )["country"]
 
 
@@ -1297,7 +1331,8 @@ def setCountry(userID: int, country: str) -> None:
     """
 
     glob.db.execute(
-        "UPDATE users_stats " "SET country = %s " "WHERE id = %s", [country, userID]
+        "UPDATE users_stats " "SET country = %s " "WHERE id = %s",
+        [country, userID],
     )
 
 
@@ -1353,7 +1388,8 @@ def setPrivileges(userID: int, priv: int) -> None:
     """
 
     glob.db.execute(
-        "UPDATE users " "SET privileges = %s " "WHERE id = %s", [priv, userID]
+        "UPDATE users " "SET privileges = %s " "WHERE id = %s",
+        [priv, userID],
     )
 
 
@@ -1366,7 +1402,8 @@ def getGroupPrivileges(groupName: str) -> Optional[int]:
     """
 
     result = glob.db.fetch(
-        "SELECT privileges " "FROM privileges_groups " "WHERE name = %s", [groupName]
+        "SELECT privileges " "FROM privileges_groups " "WHERE name = %s",
+        [groupName],
     )
 
     return result["privileges"] if result else None
@@ -1383,7 +1420,8 @@ def isInPrivilegeGroup(userID: int, groupName: str) -> bool:
     """
 
     groupPrivileges = glob.db.fetch(
-        "SELECT privileges " "FROM privileges_groups " "WHERE name = %s", [groupName]
+        "SELECT privileges " "FROM privileges_groups " "WHERE name = %s",
+        [groupName],
     )
 
     if not groupPrivileges:
@@ -1509,7 +1547,8 @@ def logHardware(userID: int, hashes: List[str], activation: bool = False) -> boo
         for i in banned:
             # Get the total numbers of logins
             total = glob.db.fetch(
-                "SELECT COUNT(*) AS count FROM hw_user WHERE userid = %s", [userID]
+                "SELECT COUNT(*) AS count FROM hw_user WHERE userid = %s",
+                [userID],
             )
             # and make sure it is valid
             if not total:
@@ -1664,7 +1703,8 @@ def hasVerifiedHardware(userID: int):
     """
 
     return glob.db.fetch(
-        "SELECT id FROM hw_user WHERE userid = %s " "AND activated = 1", [userID]
+        "SELECT id FROM hw_user WHERE userid = %s " "AND activated = 1",
+        [userID],
     )
 
 
@@ -1702,7 +1742,9 @@ def safeUsername(username: str) -> str:
 
 
 def changeUsername(
-    userID: int = 0, oldUsername: str = "", newUsername: str = ""
+    userID: int = 0,
+    oldUsername: str = "",
+    newUsername: str = "",
 ) -> None:
     """
     Change `userID`'s username to `newUsername` in database.
@@ -1744,7 +1786,8 @@ def changeUsername(
     )
 
     glob.db.execute(
-        "UPDATE rx_stats " "SET username = %s " "WHERE id = %s", [newUsername, userID]
+        "UPDATE rx_stats " "SET username = %s " "WHERE id = %s",
+        [newUsername, userID],
     )
 
     # Empty redis username cache
@@ -1782,7 +1825,8 @@ def deprecateTelegram2Fa(userID: int) -> bool:
 
     try:
         telegram2Fa = glob.db.fetch(
-            "SELECT id " "FROM 2fa_telegram " "WHERE userid = %s", [userID]
+            "SELECT id " "FROM 2fa_telegram " "WHERE userid = %s",
+            [userID],
         )
     except:
         return False  # the table doesn't exist
@@ -1811,7 +1855,8 @@ def getAchievementsVersion(userID: int) -> Optional[int]:
     """
 
     result = glob.db.fetch(
-        "SELECT achievements_version " "FROM users " "WHERE id = %s", [userID]
+        "SELECT achievements_version " "FROM users " "WHERE id = %s",
+        [userID],
     )
 
     return result["achievements_version"] if result else None
@@ -1865,12 +1910,15 @@ def getOverwriteWaitRemainder(userID: int) -> int:
     """
 
     return glob.db.fetch(
-        "SELECT previous_overwrite FROM users WHERE id = %s", [userID]
+        "SELECT previous_overwrite FROM users WHERE id = %s",
+        [userID],
     )["previous_overwrite"]
 
 
 def removeFirstPlaces(
-    userID: int, akat_mode: Optional[int] = None, game_mode: Optional[int] = None
+    userID: int,
+    akat_mode: Optional[int] = None,
+    game_mode: Optional[int] = None,
 ) -> None:
     # Go through all of the users first place scores.
     # If we find a better play, transfer the #1 to them,
@@ -1907,7 +1955,8 @@ def removeFirstPlaces(
             )
         else:  # There is no 2nd place, this was the only score.
             glob.db.execute(
-                "DELETE FROM scores_first WHERE scoreid = %s", [score["scoreid"]]
+                "DELETE FROM scores_first WHERE scoreid = %s",
+                [score["scoreid"]],
             )
 
 
@@ -1937,7 +1986,8 @@ def updateFirstPlaces(userID: int) -> None:
                 "LEFT JOIN users u ON s.userid = u.id "
                 "WHERE s.beatmap_md5 = %s AND s.play_mode = %s "
                 "AND u.privileges & 1 ORDER BY s.{0} DESC LIMIT 1".format(
-                    order, table_name
+                    order,
+                    table_name,
                 ),
                 [score["beatmap_md5"], score["play_mode"]],
             )

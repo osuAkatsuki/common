@@ -1,13 +1,16 @@
-from requests import RequestException
+from __future__ import annotations
 
+import settings
 from common.web.discord import Webhook
 from objects import glob
-import settings
+from requests import RequestException
+
 
 class schiavo:
     """
     Schiavo Bot class
     """
+
     def __init__(self, botURL=None, prefix="", maxRetries=5):
         """
         Initialize a new schiavo bot instance
@@ -31,10 +34,10 @@ class schiavo:
         if not botURL:
             return
 
-        embed = Webhook(botURL, color=0x542cb8)
-        embed.add_field(name='** **', value=message)
-        embed.set_footer(text=f'Akatsuki Anticheat')
-        embed.set_thumbnail('https://akatsuki.pw/static/logos/logo.png')
+        embed = Webhook(botURL, color=0x542CB8)
+        embed.add_field(name="** **", value=message)
+        embed.set_footer(text=f"Akatsuki Anticheat")
+        embed.set_thumbnail("https://akatsuki.pw/static/logos/logo.png")
 
         for _ in range(self.maxRetries):
             try:
@@ -44,7 +47,7 @@ class schiavo:
                 continue
 
     # Anticheat webhooks
-    def sendACGeneral(self, message): # GMT+
+    def sendACGeneral(self, message):  # GMT+
         """
         Send a message to Anticheat's #general
 
@@ -53,7 +56,7 @@ class schiavo:
         """
         self.sendMessage(message, settings.WEBHOOK_AC_GENERAL)
 
-    def sendACConfidential(self, message): # cmyui only
+    def sendACConfidential(self, message):  # cmyui only
         """
         Send a message to Anticheat's #confidential
 

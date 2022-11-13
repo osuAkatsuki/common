@@ -1,4 +1,7 @@
-from os import mkdir, path
+from __future__ import annotations
+
+from os import mkdir
+from os import path
 from pathlib import Path
 
 PAGES = (
@@ -52,7 +55,7 @@ def check_license(namespace, project_name):
 
     print(
         f"    {project_name}, and most/all software related to {namespace},\n"
-        "is licensed under the GNU Affero General Public License.\n"
+        "is licensed under the GNU Affero General Public License.\n",
     )
     for page in PAGES:
         print(f"    \n{page}")
@@ -61,10 +64,15 @@ def check_license(namespace, project_name):
         except KeyboardInterrupt:
             raise LicenseError("License not read. Quitting.")
 
-    if input("\nPlease write 'I agree' to accept the terms of the license.\n").lower().strip() != "i agree":
+    if (
+        input("\nPlease write 'I agree' to accept the terms of the license.\n")
+        .lower()
+        .strip()
+        != "i agree"
+    ):
         raise LicenseError("License not agreed. Quitting.")
 
     try:
         open(agreed_file_name, "a").close()
-    except IOError as e:
+    except OSError as e:
         raise LicenseError(f"Couldn't save read status: {e}")

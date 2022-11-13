@@ -1,4 +1,6 @@
 """Contains user actions"""
+from __future__ import annotations
+
 IDLE = 0
 AFK = 1
 PLAYING = 2

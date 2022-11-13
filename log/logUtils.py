@@ -1,23 +1,25 @@
+from __future__ import annotations
+
 from os import name
 from sys import stdout as _stdout
 from typing import Optional
 
+import settings
 from common import generalUtils
 from common.constants import bcolors
 from common.ripple import userUtils
 from objects import glob
 
-import settings
+ENDL = "\n" if name == "posix" else "\r\n"
 
-ENDL = '\n' if name == 'posix' else '\r\n'
 
 def logMessage(
     message: str,
-    alertType: str = 'INFO',
+    alertType: str = "INFO",
     messageColor: Optional[str] = bcolors.ENDC,
     discord: Optional[str] = None,
     out_file: Optional[str] = None,
-    stdout: bool = True
+    stdout: bool = True,
 ) -> None:
     """
     Log a message
@@ -32,40 +34,53 @@ def logMessage(
     """
 
     # Get type color from alertType
-    if   alertType == "INFO":      typeColor = bcolors.CYAN
-    elif alertType == "WARNING":   typeColor = bcolors.YELLOW
-    elif alertType == "ERROR":     typeColor = bcolors.RED
-    elif alertType == "CHAT":      typeColor = bcolors.BLUE
-    elif alertType == "DEBUG":     typeColor = bcolors.PINK
-    elif alertType == "ANTICHEAT": typeColor = bcolors.PINK
-    else:                          typeColor = bcolors.ENDC
+    if alertType == "INFO":
+        typeColor = bcolors.CYAN
+    elif alertType == "WARNING":
+        typeColor = bcolors.YELLOW
+    elif alertType == "ERROR":
+        typeColor = bcolors.RED
+    elif alertType == "CHAT":
+        typeColor = bcolors.BLUE
+    elif alertType == "DEBUG":
+        typeColor = bcolors.PINK
+    elif alertType == "ANTICHEAT":
+        typeColor = bcolors.PINK
+    else:
+        typeColor = bcolors.ENDC
 
     if stdout:
         # send to console, if provided
-        console_msg = '{typeColor}[{time}] {type}{endc} - {messageColor}{message}{endc}'.format(
-            time         = generalUtils.getTimestamp(full=False), # No need to include date for console
-            type         = alertType,
-            message      = message,
-            typeColor    = typeColor,
-            messageColor = messageColor,
-            endc         = bcolors.ENDC)
+        console_msg = (
+            "{typeColor}[{time}] {type}{endc} - {messageColor}{message}{endc}".format(
+                time=generalUtils.getTimestamp(
+                    full=False,
+                ),  # No need to include date for console
+                type=alertType,
+                message=message,
+                typeColor=typeColor,
+                messageColor=messageColor,
+                endc=bcolors.ENDC,
+            )
+        )
 
-        _stdout.write(f'{console_msg}{ENDL}')
+        _stdout.write(f"{console_msg}{ENDL}")
         _stdout.flush()
 
     if discord is not None:
         # send to discord, if provided
-        if discord == 'ac_general':
+        if discord == "ac_general":
             glob.schiavo.sendACGeneral(message)
-        elif discord == 'ac_confidential':
+        elif discord == "ac_confidential":
             glob.schiavo.sendACConfidential(message)
         else:
-            error(f'Unknown discord webhook {discord}')
+            error(f"Unknown discord webhook {discord}")
 
     if out_file is not None:
         # send to file, if provided
-        file_msg = f'[{generalUtils.getTimestamp(full=True)}] {alertType} - {message}'
-        glob.fileBuffers.write(f'.data/{out_file}', f'{file_msg}{ENDL}')
+        file_msg = f"[{generalUtils.getTimestamp(full=True)}] {alertType} - {message}"
+        glob.fileBuffers.write(f".data/{out_file}", f"{file_msg}{ENDL}")
+
 
 def warning(message: str, discord: Optional[str] = None) -> None:
     """
@@ -77,6 +92,7 @@ def warning(message: str, discord: Optional[str] = None) -> None:
     """
     logMessage(message, "WARNING", bcolors.YELLOW, discord)
 
+
 def error(message: str, discord: Optional[str] = None) -> None:
     """
     Log a warning message to stdout and optionally to Discord
@@ -87,6 +103,7 @@ def error(message: str, discord: Optional[str] = None) -> None:
     """
     logMessage(message, "ERROR", bcolors.RED, discord)
 
+
 def info(message: str, discord: Optional[str] = None) -> None:
     """
     Log an info message to stdout and optionally to Discord
@@ -96,6 +113,7 @@ def info(message: str, discord: Optional[str] = None) -> None:
     :return:
     """
     logMessage(message, "INFO", bcolors.ENDC, discord)
+
 
 def debug(message: str) -> None:
     """
@@ -108,6 +126,7 @@ def debug(message: str) -> None:
     if settings.DEBUG:
         logMessage(message, "DEBUG", bcolors.PINK)
 
+
 def chat(message: str, discord: Optional[str] = None) -> None:
     """
     Log a public chat message to stdout and to chatlog_public.txt.
@@ -118,6 +137,7 @@ def chat(message: str, discord: Optional[str] = None) -> None:
     """
     logMessage(message, "CHAT", bcolors.BLUE, discord, out_file="chatlog_public.txt")
 
+
 def pm(message: str, discord: Optional[str] = None) -> None:
     """
     Log a private chat message to chatlog_private.txt.
@@ -126,7 +146,15 @@ def pm(message: str, discord: Optional[str] = None) -> None:
     :param discord: if True, send the message to discord
     :return:
     """
-    logMessage(message, "CHAT", None, discord, out_file="chatlog_private.txt", stdout=False)
+    logMessage(
+        message,
+        "CHAT",
+        None,
+        discord,
+        out_file="chatlog_private.txt",
+        stdout=False,
+    )
+
 
 def ac(message: str, discord: Optional[str] = None) -> None:
     """
@@ -138,7 +166,13 @@ def ac(message: str, discord: Optional[str] = None) -> None:
     """
     logMessage(message, "ANTICHEAT", bcolors.CYAN, discord)
 
-def rap(userID: int, message: str, discord: Optional[str] = None, admin: str = 'Aika') -> None:
+
+def rap(
+    userID: int,
+    message: str,
+    discord: Optional[str] = None,
+    admin: str = "Aika",
+) -> None:
     """
     Log a message to Admin Logs.
 
@@ -149,8 +183,8 @@ def rap(userID: int, message: str, discord: Optional[str] = None, admin: str = '
     :return:
     """
     glob.db.execute(
-        'INSERT INTO rap_logs (id, userid, text, datetime, through) ' #could be admin in db too?
-        'VALUES (NULL, %s, %s, UNIX_TIMESTAMP(), %s)',
-        [userID, message, admin]
+        "INSERT INTO rap_logs (id, userid, text, datetime, through) "  # could be admin in db too?
+        "VALUES (NULL, %s, %s, UNIX_TIMESTAMP(), %s)",
+        [userID, message, admin],
     )
     logMessage(f"{userUtils.getUsername(userID)} {message}", discord=discord)

@@ -1,20 +1,21 @@
+from __future__ import annotations
+
 import inspect
 import time
 from queue import Queue
 
-import MySQLdb
 import MySQLdb.cursors
-
+import settings
 from common.log import logUtils as log
 from objects import glob
 
-import settings
 
 class worker:
     """
     A single MySQL worker
     """
-    __slots__ = ('connection', 'temporary')
+
+    __slots__ = ("connection", "temporary")
 
     def __init__(self, connection, temporary=False):
         """
@@ -50,11 +51,13 @@ class worker:
         """
         self.connection.close()
 
+
 class connectionsPool:
     """
     A MySQL workers pool
     """
-    __slots__ = ('config', 'maxSize', 'pool', 'consecutiveEmptyPool')
+
+    __slots__ = ("config", "maxSize", "pool", "consecutiveEmptyPool")
 
     def __init__(self, host, username, password, database, size=128):
         """
@@ -83,7 +86,7 @@ class connectionsPool:
             *self.config,
             autocommit=True,
             charset="utf8",
-            use_unicode=True
+            use_unicode=True,
         )
         conn = worker(db, temporary)
         return conn
@@ -113,11 +116,13 @@ class connectionsPool:
         :return: instance of worker class
         """
         # Make sure we below 50 retries
-        #log.info("Pool size: {}".format(self.pool.qsize()))
+        # log.info("Pool size: {}".format(self.pool.qsize()))
         glob.dog.increment(f"{glob.DATADOG_PREFIX}.mysql_pool.queries")
         glob.dog.gauge(f"{glob.DATADOG_PREFIX}.mysql_pool.size", self.pool.qsize())
         if level >= 50:
-            log.warning("Too many failed connection attempts. No MySQL connection available.")
+            log.warning(
+                "Too many failed connection attempts. No MySQL connection available.",
+            )
             return None
 
         try:
@@ -131,7 +136,9 @@ class connectionsPool:
 
                 # If the pool is usually empty, expand it
                 if self.consecutiveEmptyPool >= 10:
-                    log.warning("MySQL connections pool is empty. Filling connections pool.")
+                    log.warning(
+                        "MySQL connections pool is empty. Filling connections pool.",
+                    )
                     self.fillPool()
             else:
                 # The pool is not empty. Get worker from the pool
@@ -144,7 +151,7 @@ class connectionsPool:
             log.warning("Can't connect to MySQL database. Retrying in 1 second...")
             glob.dog.increment(f"{glob.DATADOG_PREFIX}.mysql_pool.failed_connections")
             time.sleep(1)
-            return self.getWorker(level=level+1)
+            return self.getWorker(level=level + 1)
 
         # Return the connection
         return worker
@@ -166,11 +173,13 @@ class connectionsPool:
             # Put the connection in the queue if there's space
             self.pool.put_nowait(worker)
 
+
 class db:
     """
     A MySQL helper with multiple workers
     """
-    __slots__ = ('pool',)
+
+    __slots__ = ("pool",)
 
     def __init__(self, host, username, password, database, initialSize):
         """
@@ -196,11 +205,11 @@ class db:
             # print sql queries
             stack = []
             for frame in inspect.stack()[1:]:
-                if frame.function == 'handle': # TODO: better
+                if frame.function == "handle":  # TODO: better
                     break
                 stack.append(frame.function)
-            delim=" \x1b[0;92m->\x1b[0m "
-            print(f'execute ({delim.join(reversed(stack))})')
+            delim = " \x1b[0;92m->\x1b[0m "
+            print(f"execute ({delim.join(reversed(stack))})")
 
         if params is None:
             params = ()
@@ -233,11 +242,11 @@ class db:
             # print sql queries
             stack = []
             for frame in inspect.stack()[1:]:
-                if frame.function == 'handle': # TODO: better
+                if frame.function == "handle":  # TODO: better
                     break
                 stack.append(frame.function)
-            delim=" \x1b[0;92m->\x1b[0m "
-            print(f'fetch ({delim.join(reversed(stack))})')
+            delim = " \x1b[0;92m->\x1b[0m "
+            print(f"fetch ({delim.join(reversed(stack))})")
 
         if params is None:
             params = ()

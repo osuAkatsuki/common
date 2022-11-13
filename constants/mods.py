@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 NOMOD = 0
 NOFAIL = 1 << 0
 EASY = 1 << 1

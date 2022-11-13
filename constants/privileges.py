@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 USER_PUBLIC = 1 << 0
 USER_NORMAL = 1 << 1
 USER_DONOR = 1 << 2
