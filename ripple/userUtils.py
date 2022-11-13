@@ -14,6 +14,8 @@ from common.ripple import passwordUtils
 from common.web.discord import Webhook
 from objects import glob
 
+import settings
+
 
 def getBeatmapTime(beatmapID: int) -> Any:
     """
@@ -29,7 +31,7 @@ def getBeatmapTime(beatmapID: int) -> Any:
         return res["hit_length"]
 
     # Failed to find in db, use mirror.
-    r = get(f"{glob.conf.config['cheesegull']['apiurl']}/b/{beatmapID}", timeout=2).text
+    r = get(f"{settings.MIRROR_URL}/b/{beatmapID}", timeout=2).text
     if r and r != "null\n":
         return loads(r)["TotalLength"]
 
@@ -58,7 +60,7 @@ def submitBeatmapRequest(
 
     username: Optional[str] = getUsername(userID)
 
-    embed = Webhook(glob.conf.config["webhooks"]["rank_requests"], color=5516472)
+    embed = Webhook(settings.WEBHOOK_RANK_REQUESTS, color=5516472)
     embed.set_author(
         name=username,
         icon=f"http://a.akatsuki.pw/{userID}",

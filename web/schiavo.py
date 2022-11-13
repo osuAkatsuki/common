@@ -2,7 +2,7 @@ from requests import RequestException
 
 from common.web.discord import Webhook
 from objects import glob
-
+import settings
 
 class schiavo:
     """
@@ -51,7 +51,7 @@ class schiavo:
         :param message: message content.
         :return:
         """
-        self.sendMessage(message, glob.conf.config['webhooks']['ac_general'])
+        self.sendMessage(message, settings.WEBHOOK_AC_GENERAL)
 
     def sendACConfidential(self, message): # cmyui only
         """
@@ -60,4 +60,4 @@ class schiavo:
         :param message: message content.
         :return:
         """
-        self.sendMessage(message, glob.conf.config['webhooks']['ac_confidential'])
+        self.sendMessage(message, settings.WEBHOOK_AC_CONFIDENTIAL)
