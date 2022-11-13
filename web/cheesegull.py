@@ -7,6 +7,7 @@ from requests import RequestException
 from constants import exceptions
 from objects import glob
 
+import settings
 
 def cheesegullRequest(
     handler,
@@ -45,7 +46,7 @@ def cheesegullRequest(
         getParams = params
         postData = None
 
-    mirror_url: str = glob.conf.config["mirror"]["apiurl"]  # type: ignore
+    mirror_url: str = settings.MIRROR_URL  # type: ignore
 
     request_url = f"{mirror_url}/{handler}"
     print(f"making request to mirror {request_url}, {getParams}, {postData}")

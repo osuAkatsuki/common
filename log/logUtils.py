@@ -7,6 +7,8 @@ from common.constants import bcolors
 from common.ripple import userUtils
 from objects import glob
 
+import settings
+
 ENDL = '\n' if name == 'posix' else '\r\n'
 
 def logMessage(
@@ -103,7 +105,7 @@ def debug(message: str) -> None:
     :param message: debug message
     :return:
     """
-    if glob.debug:
+    if settings.DEBUG:
         logMessage(message, "DEBUG", bcolors.PINK)
 
 def chat(message: str, discord: Optional[str] = None) -> None:

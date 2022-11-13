@@ -8,6 +8,7 @@ import MySQLdb.cursors
 from common.log import logUtils as log
 from objects import glob
 
+import settings
 
 class worker:
     """
@@ -191,7 +192,7 @@ class db:
         :param query: query to execute. You can bind parameters with %s
         :param params: parameters list. First element replaces first %s and so on
         """
-        if glob.debug:
+        if settings.DEBUG:
             # print sql queries
             stack = []
             for frame in inspect.stack()[1:]:
@@ -228,7 +229,7 @@ class db:
         :param params: parameters list. First element replaces first %s and so on
         :param _all: fetch one or all values. Used internally. Use fetchAll if you want to fetch all values
         """
-        if glob.debug:
+        if settings.DEBUG:
             # print sql queries
             stack = []
             for frame in inspect.stack()[1:]:
